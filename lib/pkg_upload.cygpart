@@ -27,6 +27,7 @@ __pkg_upload() {
 	local distsubdir
 	local file
 	local key_fingerprint
+	local -i n=0
 	local -a pkg_files
 
 	cd "${distdir}"
@@ -35,7 +36,6 @@ __pkg_upload() {
 
 	pkg_files=("${NAME}/${pn}-${PVR}-src.tar.xz" "${NAME}/setup.hint")
 
-	n=0
 	while (( n < pkg_count ))
 	do
 		case ${pkg_name[${n}]} in
@@ -44,6 +44,7 @@ __pkg_upload() {
 		esac
 
 		pkg_files+=("${NAME}/${PN}/${distsubdir}/${pkg_name[${n}]}-${PVR}.tar.xz" "${NAME}/${PN}/${distsubdir}/setup.hint")
+		n+=1
 	done
 
 	for file in "${pkg_files[@]}"
