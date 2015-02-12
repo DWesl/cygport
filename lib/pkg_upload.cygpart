@@ -32,7 +32,6 @@ __pkg_upload() {
 	cd "${distdir}"
 
 	# Check that binary and source package files exist
-
 	for pn in ${pkg_name[*]}
 	do
 		if [ "$pn" = "$NAME" ]
@@ -51,31 +50,20 @@ __pkg_upload() {
 		done
 	done
 
-	# If the SSH key is known, load it into an ssh-agent.
-	# The purpose of this is to get any password prompting out of the way
-	# before we run batch upload commands.
-
 	if test -z "$SSH_KEY"
 	then
-
 		# SSH key isn't known.
 		# So let lftp prompt for a passphrase every time, in case it's needed.
 		connect_string='sftp://cygwin@cygwin.com'
-
 	else
-
 		# SSH key is known, so load it into an ssh-agent.
-
 		# Password prompting if any will be done when the key is loaded into the ssh-agent,
 		# so tell lftp not to prompt.
 		connect_string='sftp://cygwin:@cygwin.com'
 
 		if ssh-add -l >/dev/null 2>/dev/null
 		then
-
-			# ssh-agent is already running.
-
-			# Get key fingerprint:
+			# ssh-agent is already running. Get key fingerprint:
 			key_fingerprint=$(ssh-keygen -l -f "$SSH_KEY" | egrep -o '[0-9a-f]{2}(:[0-9a-f]{2}){15}') \
 			|| error "Can't read key fingerprint of ${SSH_KEY}. Not a private key file, or corresponding public key file is missing?"
 
@@ -87,12 +75,8 @@ __pkg_upload() {
 				# Unload key on exit:
 				trap "ssh-add -d ${SSH_KEY} 2>/dev/null" EXIT
 			fi
-
 		else
-
-			# ssh-agent isn't running.
-
-			# Start one:
+			# ssh-agent isn't running. Start one:
 			eval $(ssh-agent -s) >/dev/null || error "Couldn't start ssh-agent."
 			# Kill it again on exit:
 			trap 'eval $(ssh-agent -k) >/dev/null' EXIT
@@ -103,23 +87,19 @@ __pkg_upload() {
 		fi
 	fi
 
-	# Upload
-
 	case ${ARCH} in
-		i686)	archdir=(x86) ;;
-		x86_64)	archdir=(x86_64) ;;
-		noarch) archdir=(x86 x86_64) ;;
-		*)  error "Don't know where to upload packages with architecture ${ARCH}" ;;
+	i686)	archdir=(x86) ;;
+	x86_64)	archdir=(x86_64) ;;
+	noarch) archdir=(x86 x86_64) ;;
+	*)  error "Don't know where to upload packages with architecture ${ARCH}" ;;
 	esac
 
 	__step "Running lftp ${connect_string}"
 
 	lftp -f <(
-
 		echo "set cmd:fail-exit on"
 		echo "set cmd:interactive on"
 		echo "set net:max-retries 1"
-
 		echo "open ${connect_string}"
 
 		for dir in ${archdir[*]}
@@ -129,7 +109,6 @@ __pkg_upload() {
 			echo "mirror -v -eR ${NAME}"
 			echo "put /dev/null -o ${NAME}/!ready"
 		done
-
 	) || error "Upload failed"
 
 	echo "Upload complete."
