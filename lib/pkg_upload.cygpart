@@ -188,18 +188,12 @@ _EOF
 
 	${EDITOR:-vi} $msg || error "Editor exited abormally, aborting annoucement"
 
-	if ! defined SMTP_SERVER
-	then
-		inform "SMTP_SERVER undefined, announcement mbox is $msg"
-		return 0
-	fi
-
 	perl <(cat <<EOF
 use strict;
 use MIME::Parser;
 use Net::SMTP;
 
-my \$smtp_server = "${SMTP_SERVER}";
+my \$smtp_server = "${SMTP_SERVER:-localhost}";
 my \$smtp_encryption = "${SMTP_ENCRYPTION:-none}";
 my \$smtp_user${SMTP_USER+ = '$SMTP_USER'};
 my \$smtp_pass${SMTP_PASS+ = '$SMTP_PASS'};
@@ -235,8 +229,7 @@ if (defined \$smtp_user) {
 \$smtp->quit();
 print "Announcement sent\n";
 EOF
-)
-	rm $msg
+) && rm $msg || error "Sending announcement failed, mbox is $msg"
 }
 
 # protect functions
